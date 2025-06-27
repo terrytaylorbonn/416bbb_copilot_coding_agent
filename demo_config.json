@@ -1,0 +1,14 @@
+{
+  "demo_type": "copilot_agent_v3",
+  "purpose": "Demonstrate real GitHub API automation",
+  "features": [
+    "Issue creation",
+    "File creation",
+    "Git operations",
+    "Pull request creation"
+  ],
+  "created_by": "simple_demo_v3.py",
+  "issue_number": 3,
+  "branch": "copilot-demo-20250627-174128",
+  "timestamp": "2025-06-27T17:41:28.624863"
+}
