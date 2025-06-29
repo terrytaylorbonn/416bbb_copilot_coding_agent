@@ -1,0 +1,16 @@
+{
+  "test_type": "code_review_agent_test",
+  "purpose": "Test automated code review functionality",
+  "issue_number": 9,
+  "branch": "code-review-test-20250629-092908",
+  "timestamp": "2025-06-29T09:29:08.429417",
+  "expected_issues": [
+    "Python print statements",
+    "TODO/FIXME comments",
+    "Wildcard imports",
+    "JavaScript console.log statements",
+    "JavaScript var usage",
+    "Security concerns (hardcoded secrets)",
+    "Large documentation file"
+  ]
+}
