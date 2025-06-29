@@ -20,6 +20,18 @@ from datetime import datetime
 from pathlib import Path
 
 
+def load_env_file():
+    """Load environment variables from .env file if it exists."""
+    env_file = Path(".env")
+    if env_file.exists():
+        with open(env_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+
+
 def create_github_issue(repo_owner, repo_name, github_token, title, description):
     """Create a real GitHub issue using the GitHub API."""
     
@@ -286,16 +298,22 @@ Closes #{issue_number}
 def main():
     """Main function - creates issue, real files, and pull request."""
     
+    # Load environment variables from .env file if it exists
+    load_env_file()
+    
     # Configuration
     repo_owner = "terrytaylorbonn"
     repo_name = "416bbb_copilot_coding_agent"
     
-    # Get GitHub token
+    # Get GitHub token from environment variable
     github_token = os.getenv('GITHUB_TOKEN')
     
     if not github_token:
         print("❌ Error: GitHub token not found!")
-        print("Run: python simple_demo_v3.py YOUR_TOKEN_HERE")
+        print("Please set the GITHUB_TOKEN environment variable:")
+        print("  Windows: set GITHUB_TOKEN=your_token_here")
+        print("  Linux/Mac: export GITHUB_TOKEN=your_token_here")
+        print("  Or create a .env file with: GITHUB_TOKEN=your_token_here")
         return 1
     
     print("🎯 Simple GitHub Demo v3 - Real Actions Only")
@@ -366,10 +384,4 @@ This demonstrates a **complete end-to-end Copilot agent workflow**!
 
 
 if __name__ == "__main__":
-    import sys
-    
-    # Allow token to be passed as command line argument
-    if len(sys.argv) > 1:
-        os.environ['GITHUB_TOKEN'] = sys.argv[1]
-    
     exit(main())
