@@ -29,14 +29,16 @@ def webhook():
         data = request.get_json()
         action = data.get('action', 'no-action') if data else 'no-data'
         
-        # Just log it
-        print(f"🔔 Webhook received: {event_type} - {action}")
+        # Just log it with more detail
+        print(f"🔔 Webhook received: {event_type} - {action}", flush=True)
+        print(f"📦 Full payload keys: {list(data.keys()) if data else 'None'}", flush=True)
         
         # Simple response
         return jsonify({
             "status": "received", 
             "event": event_type,
-            "action": action
+            "action": action,
+            "timestamp": "received"
         })
         
     except Exception as e:
