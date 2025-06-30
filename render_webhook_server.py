@@ -8,6 +8,8 @@ import json
 import hashlib
 import hmac
 import logging
+import requests
+import re
 from flask import Flask, request, jsonify
 import threading
 
@@ -67,23 +69,131 @@ def index():
         'port': PORT
     }), 200
 
+def get_pr_files(pr_number, github_token, repo_name):
+    """Get changed files from a PR"""
+    try:
+        url = f"https://api.github.com/repos/{repo_name}/pulls/{pr_number}/files"
+        headers = {
+            'Authorization': f'token {github_token}',
+            'Accept': 'application/vnd.github.v3+json'
+        }
+        
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"Failed to get PR files: {response.status_code}")
+            return []
+    except Exception as e:
+        logger.error(f"Error getting PR files: {e}")
+        return []
+
+def analyze_code_change(patch, file_path):
+    """Analyze code changes from git patch"""
+    changes = []
+    if not patch:
+        return changes
+    
+    lines = patch.split('\n')
+    line_number = 0
+    
+    for line in lines:
+        if line.startswith('@@'):
+            # Parse line number from hunk header
+            match = re.search(r'\+(\d+)', line)
+            if match:
+                line_number = int(match.group(1))
+        elif line.startswith('+') and not line.startswith('+++'):
+            # This is an added line
+            code = line[1:]  # Remove the '+' prefix
+            if code.strip():  # Only non-empty lines
+                changes.append({
+                    'type': 'addition',
+                    'line': line_number,
+                    'code': code
+                })
+            line_number += 1
+        elif not line.startswith('-'):
+            line_number += 1
+    
+    return changes
+
+def generate_ai_review(code, file_path, change_type, openai_key):
+    """Generate AI review comment using OpenAI"""
+    try:
+        # Simple AI review prompt
+        prompt = f"""Review this code change:
+
+File: {file_path}
+Code: {code}
+
+Provide a brief code review focusing on:
+- Potential bugs or errors
+- Security issues
+- Performance improvements
+- Best practices
+
+Keep response under 100 words."""
+
+        # OpenAI API call (simplified)
+        headers = {
+            'Authorization': f'Bearer {openai_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        data = {
+            'model': 'gpt-3.5-turbo',
+            'messages': [{'role': 'user', 'content': prompt}],
+            'max_tokens': 150,
+            'temperature': 0.7
+        }
+        
+        response = requests.post('https://api.openai.com/v1/chat/completions', 
+                               headers=headers, json=data, timeout=30)
+        
+        if response.status_code == 200:
+            result = response.json()
+            return result['choices'][0]['message']['content'].strip()
+        else:
+            logger.error(f"OpenAI API error: {response.status_code}")
+            return "Error: AI review unavailable"
+            
+    except Exception as e:
+        logger.error(f"Error generating AI review: {e}")
+        return f"Error: {str(e)}"
+
+def post_review_comment(pr_number, sha, file_path, line, comment, github_token, repo_name):
+    """Post a review comment on GitHub PR"""
+    try:
+        url = f"https://api.github.com/repos/{repo_name}/pulls/{pr_number}/comments"
+        headers = {
+            'Authorization': f'token {github_token}',
+            'Accept': 'application/vnd.github.v3+json'
+        }
+        
+        data = {
+            'body': comment,
+            'commit_id': sha,
+            'path': file_path,
+            'line': line
+        }
+        
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code == 201:
+            logger.info(f"✅ Posted comment successfully")
+            return True
+        else:
+            logger.error(f"Failed to post comment: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error posting comment: {e}")
+        return False
+
 def run_ai_review(pr_number, repo_name):
     """Run AI code review in background thread"""
     try:
         logger.info(f"🤖 Starting AI review for PR #{pr_number} in {repo_name}")
-        
-        import sys
-        sys.path.append('.')
-        
-        from ai_code_reviewer import (
-            get_pr_files, 
-            analyze_code_change, 
-            generate_ai_review, 
-            post_review_comment,
-            load_env_vars
-        )
-        
-        load_env_vars()
         
         github_token = os.getenv('GITHUB_TOKEN')
         openai_key = os.getenv('OPENAI_API_KEY')
