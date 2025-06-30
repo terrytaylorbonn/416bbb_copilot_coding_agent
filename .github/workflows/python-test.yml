@@ -1,0 +1,39 @@
+name: Python Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, 3.10, 3.11]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install pytest
+    
+    - name: Run simple Python test
+      run: |
+        python -c "print('✅ Python ${{ matrix.python-version }} is working!')"
+        python -c "import sys; print(f'Python version: {sys.version}')"
+    
+    - name: Test Python files
+      run: |
+        # Run any Python files that exist
+        if [ -f simple_demo.py ]; then python simple_demo.py; fi
+        if [ -f example.py ]; then python example.py; fi
