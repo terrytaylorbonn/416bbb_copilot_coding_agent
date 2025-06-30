@@ -175,7 +175,7 @@ def post_review_comment(pr_number, sha, file_path, line, comment, github_token, 
             'body': comment,
             'commit_id': sha,
             'path': file_path,
-            'line': line
+            'position': line  # Use 'position' instead of 'line' for diff line numbers
         }
         
         response = requests.post(url, headers=headers, json=data)
@@ -183,7 +183,7 @@ def post_review_comment(pr_number, sha, file_path, line, comment, github_token, 
             logger.info(f"✅ Posted comment successfully")
             return True
         else:
-            logger.error(f"Failed to post comment: {response.status_code}")
+            logger.error(f"Failed to post comment: {response.status_code} - {response.text}")
             return False
             
     except Exception as e:
