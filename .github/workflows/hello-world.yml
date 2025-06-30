@@ -3,9 +3,9 @@ name: Hello World
 # When to run this action
 on:
   push:
-    branches: [ main, master ]
+    branches: [ "*" ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ "*" ]
 
 jobs:
   hello:
