@@ -1,0 +1,10 @@
+# When I push code, run this computer command
+name: Ultra Simple
+on: push
+jobs:
+  do-stuff:
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "Someone pushed code!"
+    - run: date
+    - run: whoami

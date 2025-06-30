@@ -1,0 +1,43 @@
+name: Daily Health Check
+
+# Runs every day at 9 AM UTC
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Also allow manual triggering
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Daily greeting
+      run: |
+        echo "🌅 Good morning! Daily health check running..."
+        echo "Date: $(date)"
+        echo "Repository: $GITHUB_REPOSITORY"
+    
+    - name: Check repository stats
+      run: |
+        echo "📊 Repository statistics:"
+        echo "Python files: $(find . -name '*.py' | wc -l)"
+        echo "Total files: $(find . -type f | wc -l)"
+        echo "Directories: $(find . -type d | wc -l)"
+    
+    - name: Check if requirements.txt exists
+      run: |
+        if [ -f requirements.txt ]; then
+          echo "✅ requirements.txt found"
+          echo "Dependencies: $(wc -l < requirements.txt) lines"
+        else
+          echo "❌ No requirements.txt found"
+        fi
+    
+    - name: System info
+      run: |
+        echo "🖥️ System information:"
+        echo "OS: $(uname -a)"
+        echo "Disk usage: $(df -h / | tail -1)"
+        echo "Memory: $(free -h | head -2 | tail -1)"

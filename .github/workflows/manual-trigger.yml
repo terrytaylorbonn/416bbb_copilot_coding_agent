@@ -1,0 +1,47 @@
+name: Manual Demo
+
+# This action can only be triggered manually from GitHub's Actions tab
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Custom message to display'
+        required: true
+        default: 'Hello from manual trigger!'
+      environment:
+        description: 'Environment to simulate'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - staging
+        - production
+
+jobs:
+  manual-demo:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Show inputs
+      run: |
+        echo "🎯 Manual trigger activated!"
+        echo "Message: ${{ github.event.inputs.message }}"
+        echo "Environment: ${{ github.event.inputs.environment }}"
+        echo "Triggered by: ${{ github.actor }}"
+    
+    - name: Simulate deployment
+      run: |
+        echo "🚀 Simulating deployment to ${{ github.event.inputs.environment }}..."
+        sleep 3
+        echo "✅ Deployment complete!"
+    
+    - name: Environment-specific actions
+      run: |
+        if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+          echo "🔒 Production environment - extra security checks"
+        elif [ "${{ github.event.inputs.environment }}" = "staging" ]; then
+          echo "🧪 Staging environment - running integration tests"
+        else
+          echo "💻 Development environment - quick validation"
+        fi
